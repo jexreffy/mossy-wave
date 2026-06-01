@@ -30,15 +30,6 @@ export class CdnStack extends cdk.Stack {
       originAccessControl: oac,
     });
 
-    // Strip cache on API calls so reads are always fresh
-    const apiCachePolicy = new cloudfront.CachePolicy(this, 'ApiCachePolicy', {
-      defaultTtl: cdk.Duration.seconds(0),
-      minTtl: cdk.Duration.seconds(0),
-      maxTtl: cdk.Duration.seconds(0),
-      headerBehavior: cloudfront.CacheHeaderBehavior.allowList('Content-Type', 'X-Client-Id'),
-      queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
-    });
-
     const apiDomain = `${props.httpApi.httpApiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
@@ -52,7 +43,10 @@ export class CdnStack extends cdk.Stack {
         '/api/*': {
           origin: new origins.HttpOrigin(apiDomain),
           viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
-          cachePolicy: apiCachePolicy,
+          // CACHING_DISABLED (TTL=0) requires no custom header/query config —
+          // use OriginRequestPolicy to forward headers to the API instead
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
           allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
           cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
         },
