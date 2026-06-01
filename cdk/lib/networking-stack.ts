@@ -47,21 +47,8 @@ export class NetworkingStack extends cdk.Stack {
       'HTTPS to DynamoDB VPC endpoint',
     );
 
-    // Optional: EC2 bastion (t2.micro stays in free tier — 750 hrs/month)
-    const bastionSg = new ec2.SecurityGroup(this, 'BastionSg', {
-      vpc: this.vpc,
-      description: 'Bastion host - SSH from your IP only',
-    });
-    bastionSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH - restrict to your IP in the console');
-
-    new ec2.Instance(this, 'Bastion', {
-      vpc: this.vpc,
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
-      machineImage: ec2.MachineImage.latestAmazonLinux2(),
-      securityGroup: bastionSg,
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      associatePublicIpAddress: true,
-    });
+    // TODO: Add EC2 bastion (t2.micro, free tier) once account EC2 launch limit is lifted
+    // bastionSg + ec2.Instance go here
 
     new cdk.CfnOutput(this, 'VpcId', { value: this.vpc.vpcId });
   }
