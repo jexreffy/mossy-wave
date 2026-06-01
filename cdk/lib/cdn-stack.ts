@@ -6,21 +6,27 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import { Construct } from 'constructs';
 
 interface CdnStackProps extends cdk.StackProps {
-  frontendBucket: s3.Bucket;
   httpApi: apigwv2.HttpApi;
 }
 
 export class CdnStack extends cdk.Stack {
+  readonly frontendBucket: s3.Bucket;
+
   constructor(scope: Construct, id: string, props: CdnStackProps) {
     super(scope, id, props);
 
-    const { frontendBucket, httpApi } = props;
+    // Bucket lives here to avoid a cross-stack OAC bucket-policy dependency cycle
+    this.frontendBucket = new s3.Bucket(this, 'FrontendBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
 
     const oac = new cloudfront.S3OriginAccessControl(this, 'OAC', {
       description: 'Mossy Wave frontend OAC',
     });
 
-    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(frontendBucket, {
+    const s3Origin = origins.S3BucketOrigin.withOriginAccessControl(this.frontendBucket, {
       originAccessControl: oac,
     });
 
@@ -33,9 +39,10 @@ export class CdnStack extends cdk.Stack {
       queryStringBehavior: cloudfront.CacheQueryStringBehavior.all(),
     });
 
-    const apiDomain = `${httpApi.httpApiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
+    const apiDomain = `${props.httpApi.httpApiId}.execute-api.${cdk.Stack.of(this).region}.amazonaws.com`;
 
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
+      comment: 'mossy-wave',
       defaultBehavior: {
         origin: s3Origin,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -61,5 +68,7 @@ export class CdnStack extends cdk.Stack {
       value: `https://${distribution.distributionDomainName}`,
       description: 'Public URL for Mossy Wave',
     });
+
+    new cdk.CfnOutput(this, 'FrontendBucketName', { value: this.frontendBucket.bucketName });
   }
 }

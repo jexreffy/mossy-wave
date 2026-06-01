@@ -38,7 +38,14 @@ export class ComputeStack extends cdk.Stack {
     notesTable.grantReadData(role);
     notesTable.grantWriteData(role);
 
-    const commonProps: Partial<lambda.FunctionProps> = {
+    const makeLogGroup = (name: string) =>
+      new logs.LogGroup(this, `${name}LogGroup`, {
+        logGroupName: `/aws/lambda/mossy-wave-${name.toLowerCase()}`,
+        retention: logs.RetentionDays.ONE_WEEK,
+        removalPolicy: cdk.RemovalPolicy.DESTROY,
+      });
+
+    const commonProps = (name: string, handler: string): lambda.FunctionProps => ({
       runtime: lambda.Runtime.NODEJS_20_X,
       vpc,
       securityGroups: [lambdaSg],
@@ -47,27 +54,13 @@ export class ComputeStack extends cdk.Stack {
       environment: commonEnv,
       timeout: cdk.Duration.seconds(10),
       memorySize: 256,
-    };
-
-    this.listFn = new lambda.Function(this, 'ListNotes', {
-      ...commonProps,
-      handler: 'list.handler',
+      handler,
       code: lambda.Code.fromAsset('../api/dist'),
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    } as lambda.FunctionProps);
+      logGroup: makeLogGroup(name),
+    });
 
-    this.createFn = new lambda.Function(this, 'CreateNote', {
-      ...commonProps,
-      handler: 'create.handler',
-      code: lambda.Code.fromAsset('../api/dist'),
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    } as lambda.FunctionProps);
-
-    this.deleteFn = new lambda.Function(this, 'DeleteNote', {
-      ...commonProps,
-      handler: 'delete.handler',
-      code: lambda.Code.fromAsset('../api/dist'),
-      logRetention: logs.RetentionDays.ONE_WEEK,
-    } as lambda.FunctionProps);
+    this.listFn = new lambda.Function(this, 'ListNotes', commonProps('list', 'list.handler'));
+    this.createFn = new lambda.Function(this, 'CreateNote', commonProps('create', 'create.handler'));
+    this.deleteFn = new lambda.Function(this, 'DeleteNote', commonProps('delete', 'delete.handler'));
   }
 }

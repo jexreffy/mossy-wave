@@ -27,8 +27,7 @@ const api = new ApiStack(app, 'MossyWaveApi', {
   deleteFn: compute.deleteFn,
 });
 new CdnStack(app, 'MossyWaveCdn', {
-  // us-east-1 required for CloudFront ACM certs
+  // CloudFront requires us-east-1 for ACM certs
   env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: 'us-east-1' },
-  frontendBucket: storage.frontendBucket,
   httpApi: api.httpApi,
 });
