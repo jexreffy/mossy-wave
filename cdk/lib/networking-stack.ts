@@ -36,7 +36,7 @@ export class NetworkingStack extends cdk.Stack {
 
     this.lambdaSg = new ec2.SecurityGroup(this, 'LambdaSg', {
       vpc: this.vpc,
-      description: 'Lambda functions — egress to DynamoDB VPC endpoint only',
+      description: 'Lambda functions - egress to DynamoDB VPC endpoint only',
       allowAllOutbound: false,
     });
 
@@ -50,9 +50,9 @@ export class NetworkingStack extends cdk.Stack {
     // Optional: EC2 bastion (t2.micro stays in free tier — 750 hrs/month)
     const bastionSg = new ec2.SecurityGroup(this, 'BastionSg', {
       vpc: this.vpc,
-      description: 'Bastion host — SSH from your IP only',
+      description: 'Bastion host - SSH from your IP only',
     });
-    bastionSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH — restrict to your IP in the console');
+    bastionSg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH - restrict to your IP in the console');
 
     new ec2.Instance(this, 'Bastion', {
       vpc: this.vpc,
