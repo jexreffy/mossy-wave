@@ -6,6 +6,7 @@ import { db, TABLE } from './_db';
 interface NoteInput {
   content: string;
   url?: string;
+  imageKey?: string;
 }
 
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
@@ -32,6 +33,7 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     dummy: 'NOTE',
     content,
     ...(body.url ? { url: body.url } : {}),
+    ...(body.imageKey ? { imageKey: body.imageKey } : {}),
     userId,
     createdAt,
     // Auto-expire notes after 30 days

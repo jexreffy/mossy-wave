@@ -10,6 +10,7 @@ interface ApiStackProps extends cdk.StackProps {
   listFn: lambda.Function;
   createFn: lambda.Function;
   deleteFn: lambda.Function;
+  getUploadUrlFn: lambda.Function;
   userPool: cognito.UserPool;
   userPoolClient: cognito.UserPoolClient;
 }
@@ -59,6 +60,14 @@ export class ApiStack extends cdk.Stack {
       path: '/notes/{id}',
       methods: [apigwv2.HttpMethod.DELETE],
       integration: new integrations.HttpLambdaIntegration('DeleteIntegration', props.deleteFn),
+      authorizer: jwtAuthorizer,
+    });
+
+    // POST /notes/upload-url — returns a presigned S3 PUT URL for direct browser upload
+    this.httpApi.addRoutes({
+      path: '/notes/upload-url',
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new integrations.HttpLambdaIntegration('GetUploadUrlIntegration', props.getUploadUrlFn),
       authorizer: jwtAuthorizer,
     });
 

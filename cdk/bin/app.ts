@@ -21,12 +21,14 @@ const compute = new ComputeStack(app, 'MossyWaveCompute', {
   vpc: networking.vpc,
   lambdaSg: networking.lambdaSg,
   notesTable: storage.notesTable,
+  imagesBucket: storage.imagesBucket,
 });
 const api = new ApiStack(app, 'MossyWaveApi', {
   env,
   listFn: compute.listFn,
   createFn: compute.createFn,
   deleteFn: compute.deleteFn,
+  getUploadUrlFn: compute.getUploadUrlFn,
   userPool: auth.userPool,
   userPoolClient: auth.userPoolClient,
 });
