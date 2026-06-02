@@ -50,6 +50,7 @@ export default function App() {
     finally { setLoading(false); }
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (authChecked) load(); }, [authChecked, load]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {

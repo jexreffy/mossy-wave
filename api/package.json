@@ -4,14 +4,18 @@
   "private": true,
   "scripts": {
     "build": "tsc --noEmit && esbuild src/list.ts src/create.ts src/delete.ts src/getUploadUrl.ts src/getTags.ts src/getNoteTags.ts src/addTag.ts src/removeTag.ts --bundle --platform=node --target=node20 --outdir=dist --external:@aws-sdk/*",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8",
-    "@types/pg": "^8",
     "@types/node": "^20",
+    "@types/pg": "^8",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
     "esbuild": "^0.21",
+    "eslint": "^10.4.1",
     "typescript": "^5",
     "vitest": "^1"
   },
