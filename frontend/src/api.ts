@@ -60,3 +60,36 @@ export async function deleteNote(token: string, noteId: string): Promise<void> {
   });
   if (!res.ok) throw new Error('Failed to delete note');
 }
+
+// ── Tags (RDS Postgres) ────────────────────────────────────────────────────
+
+export interface Tag { name: string; count: number; }
+
+export async function getTrendingTags(): Promise<Tag[]> {
+  const res = await fetch('/api/tags', { headers: headers() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function getNoteTags(noteId: string): Promise<string[]> {
+  const res = await fetch(`/api/notes/${noteId}/tags`, { headers: headers() });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function addTag(token: string, noteId: string, tag: string): Promise<void> {
+  const res = await fetch(`/api/notes/${noteId}/tags`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({ tag }),
+  });
+  if (!res.ok) throw new Error('Failed to add tag');
+}
+
+export async function removeTag(token: string, noteId: string, tag: string): Promise<void> {
+  const res = await fetch(`/api/notes/${noteId}/tags/${encodeURIComponent(tag)}`, {
+    method: 'DELETE',
+    headers: headers(token),
+  });
+  if (!res.ok) throw new Error('Failed to remove tag');
+}

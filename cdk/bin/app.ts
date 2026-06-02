@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { NetworkingStack } from '../lib/networking-stack';
 import { StorageStack } from '../lib/storage-stack';
 import { AuthStack } from '../lib/auth-stack';
+import { RdsStack } from '../lib/rds-stack';
 import { ComputeStack } from '../lib/compute-stack';
 import { ApiStack } from '../lib/api-stack';
 import { CdnStack } from '../lib/cdn-stack';
@@ -17,12 +18,19 @@ const env = {
 const networking = new NetworkingStack(app, 'MossyWaveNetworking', { env });
 const storage = new StorageStack(app, 'MossyWaveStorage', { env });
 const auth = new AuthStack(app, 'MossyWaveAuth', { env });
+const rds = new RdsStack(app, 'MossyWaveRds', {
+  env,
+  vpc: networking.vpc,
+  lambdaSg: networking.lambdaSg,
+});
 const compute = new ComputeStack(app, 'MossyWaveCompute', {
   env,
   vpc: networking.vpc,
   lambdaSg: networking.lambdaSg,
   notesTable: storage.notesTable,
   imagesBucket: storage.imagesBucket,
+  dbInstance: rds.dbInstance,
+  dbPassword: rds.dbPassword,
 });
 const api = new ApiStack(app, 'MossyWaveApi', {
   env,
@@ -30,6 +38,10 @@ const api = new ApiStack(app, 'MossyWaveApi', {
   createFn: compute.createFn,
   deleteFn: compute.deleteFn,
   getUploadUrlFn: compute.getUploadUrlFn,
+  addTagFn: compute.addTagFn,
+  removeTagFn: compute.removeTagFn,
+  getTagsFn: compute.getTagsFn,
+  getNoteTagsFn: compute.getNoteTagsFn,
   userPool: auth.userPool,
   userPoolClient: auth.userPoolClient,
 });

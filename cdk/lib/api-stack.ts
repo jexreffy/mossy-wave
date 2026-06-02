@@ -11,6 +11,10 @@ interface ApiStackProps extends cdk.StackProps {
   createFn: lambda.Function;
   deleteFn: lambda.Function;
   getUploadUrlFn: lambda.Function;
+  addTagFn: lambda.Function;
+  removeTagFn: lambda.Function;
+  getTagsFn: lambda.Function;
+  getNoteTagsFn: lambda.Function;
   userPool: cognito.UserPool;
   userPoolClient: cognito.UserPoolClient;
 }
@@ -21,55 +25,49 @@ export class ApiStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    // JWT authorizer — API Gateway validates Cognito tokens automatically,
-    // no token verification code needed in Lambda
     const jwtAuthorizer = new authorizers.HttpJwtAuthorizer(
       'CognitoAuthorizer',
       `https://cognito-idp.${this.region}.amazonaws.com/${props.userPool.userPoolId}`,
-      {
-        jwtAudience: [props.userPoolClient.userPoolClientId],
-      },
+      { jwtAudience: [props.userPoolClient.userPoolClientId] },
     );
 
     this.httpApi = new apigwv2.HttpApi(this, 'NotesApi', {
       apiName: 'mossy-wave-api',
       corsPreflight: {
         allowOrigins: ['*'],
-        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST, apigwv2.CorsHttpMethod.DELETE],
+        allowMethods: [
+          apigwv2.CorsHttpMethod.GET,
+          apigwv2.CorsHttpMethod.POST,
+          apigwv2.CorsHttpMethod.DELETE,
+        ],
         allowHeaders: ['Content-Type', 'Authorization'],
       },
     });
 
-    // GET /notes — public, no auth required (anyone can read the board)
-    this.httpApi.addRoutes({
-      path: '/notes',
-      methods: [apigwv2.HttpMethod.GET],
-      integration: new integrations.HttpLambdaIntegration('ListIntegration', props.listFn),
-    });
+    const route = (
+      path: string,
+      method: apigwv2.HttpMethod,
+      fn: lambda.Function,
+      auth?: apigwv2.IHttpRouteAuthorizer,
+    ) =>
+      this.httpApi.addRoutes({
+        path,
+        methods: [method],
+        integration: new integrations.HttpLambdaIntegration(`${method}${path.replace(/\W/g, '')}`, fn),
+        ...(auth ? { authorizer: auth } : {}),
+      });
 
-    // POST /notes — requires valid Cognito JWT
-    this.httpApi.addRoutes({
-      path: '/notes',
-      methods: [apigwv2.HttpMethod.POST],
-      integration: new integrations.HttpLambdaIntegration('CreateIntegration', props.createFn),
-      authorizer: jwtAuthorizer,
-    });
+    // Notes — DynamoDB backed
+    route('/notes',               apigwv2.HttpMethod.GET,    props.listFn);           // public read
+    route('/notes',               apigwv2.HttpMethod.POST,   props.createFn,   jwtAuthorizer);
+    route('/notes/{id}',          apigwv2.HttpMethod.DELETE, props.deleteFn,   jwtAuthorizer);
+    route('/notes/upload-url',    apigwv2.HttpMethod.POST,   props.getUploadUrlFn, jwtAuthorizer);
 
-    // DELETE /notes/{id} — requires valid Cognito JWT
-    this.httpApi.addRoutes({
-      path: '/notes/{id}',
-      methods: [apigwv2.HttpMethod.DELETE],
-      integration: new integrations.HttpLambdaIntegration('DeleteIntegration', props.deleteFn),
-      authorizer: jwtAuthorizer,
-    });
-
-    // POST /notes/upload-url — returns a presigned S3 PUT URL for direct browser upload
-    this.httpApi.addRoutes({
-      path: '/notes/upload-url',
-      methods: [apigwv2.HttpMethod.POST],
-      integration: new integrations.HttpLambdaIntegration('GetUploadUrlIntegration', props.getUploadUrlFn),
-      authorizer: jwtAuthorizer,
-    });
+    // Tags — RDS Postgres backed (demonstrates SQL for relational/aggregate queries)
+    route('/tags',                apigwv2.HttpMethod.GET,    props.getTagsFn);         // public: trending tags
+    route('/notes/{id}/tags',     apigwv2.HttpMethod.GET,    props.getNoteTagsFn);     // public: note's tags
+    route('/notes/{id}/tags',     apigwv2.HttpMethod.POST,   props.addTagFn,   jwtAuthorizer);
+    route('/notes/{id}/tags/{tag}', apigwv2.HttpMethod.DELETE, props.removeTagFn, jwtAuthorizer);
 
     new cdk.CfnOutput(this, 'ApiUrl', { value: this.httpApi.apiEndpoint });
   }
