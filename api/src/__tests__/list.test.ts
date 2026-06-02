@@ -20,7 +20,7 @@ const mockSend = vi.mocked(db.send);
 const fakeEvent = {} as APIGatewayProxyEventV2;
 
 describe('list handler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns 200 with items from DynamoDB', async () => {
     const items = [

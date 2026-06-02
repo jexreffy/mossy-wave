@@ -15,7 +15,7 @@ import { handler } from '../getTags';
 const fakeEvent = {} as APIGatewayProxyEventV2;
 
 describe('getTags handler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('returns 200 with tag list from SQL GROUP BY query', async () => {
     const tags = [

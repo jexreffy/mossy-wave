@@ -25,7 +25,7 @@ function makeEvent(body: object, sub = 'user-123'): APIGatewayProxyEventV2WithJW
 }
 
 describe('create handler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('creates a note and returns 201 with the item', async () => {
     mockSend.mockResolvedValueOnce({} as never);

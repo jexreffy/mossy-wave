@@ -25,7 +25,7 @@ function makeEvent(noteId: string | undefined, sub: string): APIGatewayProxyEven
 }
 
 describe('delete handler', () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => { vi.clearAllMocks(); });
 
   it('deletes the note and returns 204 when owner matches', async () => {
     mockSend
