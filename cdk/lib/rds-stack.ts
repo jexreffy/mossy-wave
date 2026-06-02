@@ -29,9 +29,19 @@ export class RdsStack extends cdk.Stack {
       allowAllOutbound: false,
     });
 
-    // Allow Lambda SG → RDS on 5432 (both directions of the rule)
+    // Inbound to RDS from Lambda SG
     this.dbSg.addIngressRule(lambdaSg, ec2.Port.tcp(5432), 'Lambda to Postgres');
-    lambdaSg.addEgressRule(this.dbSg, ec2.Port.tcp(5432), 'Lambda to Postgres');
+
+    // Egress from Lambda SG to RDS SG — use CfnSecurityGroupEgress directly
+    // to avoid a cross-stack dependency cycle (lambdaSg lives in NetworkingStack)
+    new ec2.CfnSecurityGroupEgress(this, 'LambdaToRdsEgress', {
+      groupId: lambdaSg.securityGroupId,
+      ipProtocol: 'tcp',
+      fromPort: 5432,
+      toPort: 5432,
+      destinationSecurityGroupId: this.dbSg.securityGroupId,
+      description: 'Lambda to Postgres',
+    });
 
     const subnetGroup = new rds.SubnetGroup(this, 'SubnetGroup', {
       vpc,
