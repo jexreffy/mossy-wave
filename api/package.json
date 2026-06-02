@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc"
+    "build": "tsc --noEmit && esbuild src/list.ts src/create.ts src/delete.ts --bundle --platform=node --target=node20 --outdir=dist --external:@aws-sdk/*"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8",
     "@types/node": "^20",
+    "esbuild": "^0.21",
     "typescript": "^5"
   },
   "dependencies": {
