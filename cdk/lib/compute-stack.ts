@@ -31,10 +31,11 @@ export class ComputeStack extends cdk.Stack {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaVPCAccessExecutionRole'),
+        // X-Ray: allow Lambda to send traces to the X-Ray daemon
+        iam.ManagedPolicy.fromAwsManagedPolicyName('AWSXRayDaemonWriteAccess'),
       ],
     });
 
-    // Least-privilege: only the actions each handler actually needs
     notesTable.grantReadData(role);
     notesTable.grantWriteData(role);
 
@@ -57,6 +58,8 @@ export class ComputeStack extends cdk.Stack {
       handler,
       code: lambda.Code.fromAsset('../api/dist'),
       logGroup: makeLogGroup(name),
+      // X-Ray: active tracing captures Lambda invocation + downstream DynamoDB calls
+      tracing: lambda.Tracing.ACTIVE,
     });
 
     this.listFn = new lambda.Function(this, 'ListNotes', commonProps('list', 'list.handler'));

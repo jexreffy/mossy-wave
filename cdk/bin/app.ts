@@ -1,6 +1,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { NetworkingStack } from '../lib/networking-stack';
 import { StorageStack } from '../lib/storage-stack';
+import { AuthStack } from '../lib/auth-stack';
 import { ComputeStack } from '../lib/compute-stack';
 import { ApiStack } from '../lib/api-stack';
 import { CdnStack } from '../lib/cdn-stack';
@@ -14,6 +15,7 @@ const env = {
 
 const networking = new NetworkingStack(app, 'MossyWaveNetworking', { env });
 const storage = new StorageStack(app, 'MossyWaveStorage', { env });
+const auth = new AuthStack(app, 'MossyWaveAuth', { env });
 const compute = new ComputeStack(app, 'MossyWaveCompute', {
   env,
   vpc: networking.vpc,
@@ -25,6 +27,8 @@ const api = new ApiStack(app, 'MossyWaveApi', {
   listFn: compute.listFn,
   createFn: compute.createFn,
   deleteFn: compute.deleteFn,
+  userPool: auth.userPool,
+  userPoolClient: auth.userPoolClient,
 });
 new CdnStack(app, 'MossyWaveCdn', {
   // CloudFront requires us-east-1 for ACM certs

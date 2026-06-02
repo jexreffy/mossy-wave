@@ -2,24 +2,13 @@ export interface Note {
   noteId: string;
   content: string;
   url?: string;
-  clientId: string;
+  userId: string;
   createdAt: string;
 }
 
-const CLIENT_ID_KEY = 'mw-client-id';
-
-export function getClientId(): string {
-  let id = localStorage.getItem(CLIENT_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(CLIENT_ID_KEY, id);
-  }
-  return id;
-}
-
-const headers = () => ({
+const headers = (token?: string): Record<string, string> => ({
   'Content-Type': 'application/json',
-  'X-Client-Id': getClientId(),
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
 export async function listNotes(): Promise<Note[]> {
@@ -28,20 +17,20 @@ export async function listNotes(): Promise<Note[]> {
   return res.json();
 }
 
-export async function createNote(content: string, url?: string): Promise<Note> {
+export async function createNote(token: string, content: string, url?: string): Promise<Note> {
   const res = await fetch('/api/notes', {
     method: 'POST',
-    headers: headers(),
+    headers: headers(token),
     body: JSON.stringify({ content, url }),
   });
   if (!res.ok) throw new Error('Failed to create note');
   return res.json();
 }
 
-export async function deleteNote(noteId: string): Promise<void> {
+export async function deleteNote(token: string, noteId: string): Promise<void> {
   const res = await fetch(`/api/notes/${noteId}`, {
     method: 'DELETE',
-    headers: headers(),
+    headers: headers(token),
   });
   if (!res.ok) throw new Error('Failed to delete note');
 }
