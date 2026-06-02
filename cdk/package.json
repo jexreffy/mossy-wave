@@ -5,12 +5,15 @@
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/node": "^20",
     "aws-cdk": "^2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^1"
   },
   "dependencies": {
     "aws-cdk-lib": "^2",

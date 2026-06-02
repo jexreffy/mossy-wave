@@ -3,14 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "tsc --noEmit && esbuild src/list.ts src/create.ts src/delete.ts src/getUploadUrl.ts src/getTags.ts src/getNoteTags.ts src/addTag.ts src/removeTag.ts --bundle --platform=node --target=node20 --outdir=dist --external:@aws-sdk/*"
+    "build": "tsc --noEmit && esbuild src/list.ts src/create.ts src/delete.ts src/getUploadUrl.ts src/getTags.ts src/getNoteTags.ts src/addTag.ts src/removeTag.ts --bundle --platform=node --target=node20 --outdir=dist --external:@aws-sdk/*",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8",
     "@types/pg": "^8",
     "@types/node": "^20",
     "esbuild": "^0.21",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^1"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3",
