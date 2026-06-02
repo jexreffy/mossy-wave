@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    // amazon-cognito-identity-js uses Node's `global` — polyfill it for the browser
+    define: {
+      global: 'globalThis',
+    },
     server: {
       proxy: {
         // During local dev, proxy /api/* to the deployed API Gateway URL
