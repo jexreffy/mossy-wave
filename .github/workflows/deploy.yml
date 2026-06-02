@@ -49,6 +49,8 @@ jobs:
       - name: CDK deploy
         working-directory: cdk
         run: npx cdk deploy --all --require-approval never --outputs-file ../cdk-outputs.json
+        env:
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
 
       - name: Sync frontend to S3
         run: |

@@ -2,6 +2,7 @@ import { APIGatewayProxyEventV2WithJWTAuthorizer, APIGatewayProxyResultV2 } from
 import { PutCommand } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
 import { db, TABLE } from './_db';
+import { logger } from './_logger';
 
 interface NoteInput {
   content: string;
@@ -10,20 +11,22 @@ interface NoteInput {
 }
 
 export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): Promise<APIGatewayProxyResultV2> {
+  const start = Date.now();
+  const userId = event.requestContext.authorizer?.jwt?.claims?.sub ?? 'anonymous';
+
   let body: NoteInput;
   try {
     body = JSON.parse(event.body ?? '{}');
   } catch {
+    logger.warn('create note bad request', { reason: 'invalid JSON', userId });
     return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON' }) };
   }
 
   const content = body.content?.trim();
   if (!content || content.length > 500) {
+    logger.warn('create note bad request', { reason: 'invalid content', userId });
     return { statusCode: 422, body: JSON.stringify({ error: 'content is required and must be <= 500 chars' }) };
   }
-
-  // User identity comes from the validated Cognito JWT — no trusting client headers
-  const userId = event.requestContext.authorizer?.jwt?.claims?.sub ?? 'anonymous';
 
   const noteId = randomUUID();
   const createdAt = new Date().toISOString();
@@ -36,11 +39,16 @@ export async function handler(event: APIGatewayProxyEventV2WithJWTAuthorizer): P
     ...(body.imageKey ? { imageKey: body.imageKey } : {}),
     userId,
     createdAt,
-    // Auto-expire notes after 30 days
     ttl: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30,
   };
 
-  await db.send(new PutCommand({ TableName: TABLE, Item: item }));
+  try {
+    await db.send(new PutCommand({ TableName: TABLE, Item: item }));
+    logger.info('note created', { noteId, userId, hasImage: !!body.imageKey, durationMs: Date.now() - start });
+  } catch (err) {
+    logger.error('create note failed', { error: String(err), userId, durationMs: Date.now() - start });
+    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) };
+  }
 
   return {
     statusCode: 201,
