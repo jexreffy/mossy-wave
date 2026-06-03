@@ -54,11 +54,11 @@ describe('ComputeStack', () => {
     template.resourceCountIs('AWS::Lambda::Function', 8);
   });
 
-  it('all Lambda functions use Node 20 runtime', () => {
+  it('all Lambda functions use Node 22 runtime', () => {
     const template = buildStack();
     const fns = template.findResources('AWS::Lambda::Function');
     const appFns = Object.values(fns).filter(
-      (f: any) => f.Properties.Runtime === 'nodejs20.x',
+      (f: any) => f.Properties.Runtime === 'nodejs22.x',
     );
     // 8 app functions + possibly CDK custom resource functions
     expect(appFns.length).toBeGreaterThanOrEqual(8);
@@ -66,9 +66,9 @@ describe('ComputeStack', () => {
 
   it('X-Ray active tracing is enabled on all app Lambda functions', () => {
     const template = buildStack();
-    // Every function with nodejs20.x runtime should have TracingConfig Active
+    // Every function with nodejs22.x runtime should have TracingConfig Active
     const fns = template.findResources('AWS::Lambda::Function', {
-      Properties: { Runtime: 'nodejs20.x' },
+      Properties: { Runtime: 'nodejs22.x' },
     });
     Object.values(fns).forEach((fn: any) => {
       expect(fn.Properties.TracingConfig).toEqual({ Mode: 'Active' });
@@ -78,7 +78,7 @@ describe('ComputeStack', () => {
   it('all Lambda functions run inside the VPC', () => {
     const template = buildStack();
     const fns = template.findResources('AWS::Lambda::Function', {
-      Properties: { Runtime: 'nodejs20.x' },
+      Properties: { Runtime: 'nodejs22.x' },
     });
     Object.values(fns).forEach((fn: any) => {
       expect(fn.Properties.VpcConfig).toBeDefined();

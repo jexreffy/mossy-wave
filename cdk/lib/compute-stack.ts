@@ -68,7 +68,7 @@ export class ComputeStack extends cdk.Stack {
       });
 
     const fnProps = (name: string, handler: string, env: Record<string, string>): lambda.FunctionProps => ({
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       vpc,
       securityGroups: [lambdaSg],
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
